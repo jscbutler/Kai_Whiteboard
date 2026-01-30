@@ -68,31 +68,6 @@
             animation: float 3s ease-in-out infinite;
         }
         
-        /* Seasonal themes */
-        .theme-easter {
-            --primary: #FFB7C5;
-            --secondary: #98FB98;
-            --accent: #FFD700;
-        }
-        
-        .theme-halloween {
-            --primary: #FF6B35;
-            --secondary: #1a1a2e;
-            --accent: #9d4edd;
-        }
-        
-        .theme-christmas {
-            --primary: #c41e3a;
-            --secondary: #165b33;
-            --accent: #FFD700;
-        }
-        
-        .theme-default {
-            --primary: #3b82f6;
-            --secondary: #1e40af;
-            --accent: #f59e0b;
-        }
-        
         /* Sleep screen fade */
         .fade-enter-active, .fade-leave-active {
             transition: opacity 0.5s ease;
@@ -112,22 +87,51 @@
             background: rgba(255,255,255,0.3);
             border-radius: 3px;
         }
+        
+        /* Theme transition */
+        .theme-transition {
+            transition: all 0.8s ease-in-out;
+        }
+        
+        /* Swipe hint animation */
+        @keyframes swipeHint {
+            0%, 100% { transform: translateX(0); opacity: 0.3; }
+            50% { transform: translateX(20px); opacity: 0.8; }
+        }
+        .swipe-hint {
+            animation: swipeHint 2s ease-in-out infinite;
+        }
     </style>
 </head>
-<body class="bg-gray-900 text-white h-screen w-screen overflow-hidden theme-default">
+<body class="bg-gray-900 text-white h-screen w-screen overflow-hidden">
     <div id="app" class="h-full w-full relative">
         
-        <!-- SLEEP MODE - Kai Front and Center -->
+        <!-- SLEEP MODE - Kai Front and Center with Themes -->
         <transition name="fade">
             <div v-if="sleepMode" 
                  @click="wakeUp"
-                 class="absolute inset-0 z-50 bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900 flex">
+                 @touchstart="handleTouchStart"
+                 @touchend="handleTouchEnd"
+                 class="absolute inset-0 z-50 flex theme-transition"
+                 :class="currentTheme.background">
                 
-                <!-- Ambient bubbles -->
-                <div class="ambient-bubble w-32 h-32 top-10 left-10 opacity-30"></div>
-                <div class="ambient-bubble w-24 h-24 top-40 right-20 opacity-20" style="animation-delay: 1s;"></div>
-                <div class="ambient-bubble w-40 h-40 bottom-20 left-1/4 opacity-25" style="animation-delay: 2s;"></div>
-                <div class="ambient-bubble w-20 h-20 top-1/3 left-1/3 opacity-15" style="animation-delay: 3s;"></div>
+                <!-- Ambient bubbles (theme colored) -->
+                <div class="ambient-bubble w-32 h-32 top-10 left-10 opacity-30" :style="bubbleStyle(0)"></div>
+                <div class="ambient-bubble w-24 h-24 top-40 right-20 opacity-20" :style="bubbleStyle(1)"></div>
+                <div class="ambient-bubble w-40 h-40 bottom-20 left-1/4 opacity-25" :style="bubbleStyle(2)"></div>
+                <div class="ambient-bubble w-20 h-20 top-1/3 left-1/3 opacity-15" :style="bubbleStyle(3)"></div>
+                
+                <!-- Theme decorations -->
+                <div class="absolute top-4 left-4 text-6xl opacity-20">{{ currentTheme.emoji }}</div>
+                <div class="absolute bottom-4 right-4 text-6xl opacity-20">{{ currentTheme.emoji }}</div>
+                
+                <!-- Swipe indicators -->
+                <div v-if="activeThemes.length > 1" class="absolute inset-y-0 left-4 flex items-center">
+                    <button @click.stop="prevTheme" class="text-4xl opacity-30 hover:opacity-80 transition p-4">◀</button>
+                </div>
+                <div v-if="activeThemes.length > 1" class="absolute inset-y-0 right-4 flex items-center">
+                    <button @click.stop="nextTheme" class="text-4xl opacity-30 hover:opacity-80 transition p-4">▶</button>
+                </div>
                 
                 <!-- Main Kai Area -->
                 <div class="flex-1 flex flex-col items-center justify-center relative">
@@ -137,16 +141,22 @@
                         <p class="text-xl opacity-60">{{ currentTime }}</p>
                     </div>
                     
-                    <!-- Giant Kai -->
+                    <!-- Theme Badge -->
+                    <div class="absolute top-24 px-4 py-2 rounded-full bg-white bg-opacity-20 backdrop-blur">
+                        <span class="text-lg">{{ currentTheme.emoji }} {{ currentTheme.name }}</span>
+                    </div>
+                    
+                    <!-- Giant Themed Kai -->
                     <div class="kai-sleep-avatar relative cursor-pointer transform hover:scale-105 transition-transform">
-                        <!-- Outer glow ring -->
-                        <div class="absolute inset-0 bg-blue-500 rounded-full blur-3xl opacity-30 animate-pulse"></div>
+                        <!-- Outer glow ring (theme colored) -->
+                        <div class="absolute inset-0 rounded-full blur-3xl opacity-30 animate-pulse theme-transition"
+                             :style="{ backgroundColor: currentTheme.glowColor }"></div>
                         
-                        <!-- Kai SVG -->
+                        <!-- Kai SVG with theme colors -->
                         <svg width="350" height="350" viewBox="0 0 200 200" class="relative z-10">
                             <!-- Body -->
-                            <ellipse cx="100" cy="120" rx="60" ry="50" fill="#3b82f6" />
-                            <ellipse cx="100" cy="120" rx="50" ry="40" fill="#60a5fa" />
+                            <ellipse cx="100" cy="120" rx="60" ry="50" :fill="currentTheme.bodyColor" />
+                            <ellipse cx="100" cy="120" rx="50" ry="40" :fill="currentTheme.bodyLight" />
                             
                             <!-- Eyes -->
                             <g class="kai-eyes">
@@ -159,23 +169,23 @@
                             <!-- Smile -->
                             <path d="M 85 135 Q 100 145 115 135" stroke="white" stroke-width="3" fill="none" stroke-linecap="round" />
                             
-                            <!-- Antennae -->
+                            <!-- Antennae (theme colored) -->
                             <g class="kai-antennae">
-                                <path d="M 70 75 Q 60 40 50 30" stroke="#3b82f6" stroke-width="4" fill="none" stroke-linecap="round" />
-                                <circle cx="50" cy="30" r="6" fill="#f59e0b" />
-                                <path d="M 130 75 Q 140 40 150 30" stroke="#3b82f6" stroke-width="4" fill="none" stroke-linecap="round" />
-                                <circle cx="150" cy="30" r="6" fill="#f59e0b" />
+                                <path d="M 70 75 Q 60 40 50 30" :stroke="currentTheme.bodyColor" stroke-width="4" fill="none" stroke-linecap="round" />
+                                <circle cx="50" cy="30" r="6" :fill="currentTheme.accent" />
+                                <path d="M 130 75 Q 140 40 150 30" :stroke="currentTheme.bodyColor" stroke-width="4" fill="none" stroke-linecap="round" />
+                                <circle cx="150" cy="30" r="6" :fill="currentTheme.accent" />
                             </g>
                             
                             <!-- Claws -->
-                            <ellipse cx="45" cy="130" rx="15" ry="20" fill="#1e40af" />
-                            <ellipse cx="155" cy="130" rx="15" ry="20" fill="#1e40af" />
+                            <ellipse cx="45" cy="130" rx="15" ry="20" :fill="currentTheme.bodyDark" />
+                            <ellipse cx="155" cy="130" rx="15" ry="20" :fill="currentTheme.bodyDark" />
                             
                             <!-- Legs -->
-                            <ellipse cx="65" cy="165" rx="8" ry="15" fill="#2563eb" />
-                            <ellipse cx="85" cy="168" rx="8" ry="15" fill="#2563eb" />
-                            <ellipse cx="115" cy="168" rx="8" ry="15" fill="#2563eb" />
-                            <ellipse cx="135" cy="165" rx="8" ry="15" fill="#2563eb" />
+                            <ellipse cx="65" cy="165" rx="8" ry="15" :fill="currentTheme.bodyColor" />
+                            <ellipse cx="85" cy="168" rx="8" ry="15" :fill="currentTheme.bodyColor" />
+                            <ellipse cx="115" cy="168" rx="8" ry="15" :fill="currentTheme.bodyColor" />
+                            <ellipse cx="135" cy="165" rx="8" ry="15" :fill="currentTheme.bodyColor" />
                         </svg>
                         
                         <!-- Tap to wake hint -->
@@ -184,9 +194,18 @@
                         </div>
                     </div>
                     
-                    <!-- Sleep message -->
-                    <div class="absolute bottom-32 text-center max-w-md">
-                        <p class="text-2xl opacity-90 italic">"{{ sleepMessage }}"</p>
+                    <!-- Themed Sleep message -->
+                    <div class="absolute bottom-32 text-center max-w-md px-4">
+                        <p class="text-2xl opacity-90 italic">"{{ currentTheme.message }}"</p>
+                    </div>
+                    
+                    <!-- Theme dots indicator -->
+                    <div v-if="activeThemes.length > 1" class="absolute bottom-12 flex gap-2">
+                        <button v-for="(theme, idx) in activeThemes" :key="theme.id"
+                                @click.stop="setTheme(idx)"
+                                class="w-3 h-3 rounded-full transition-all"
+                                :class="currentThemeIndex === idx ? 'bg-white scale-125' : 'bg-white opacity-30'">
+                        </button>
                     </div>
                 </div>
                 
@@ -198,7 +217,8 @@
                     
                     <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4">
                         <!-- Next Up -->
-                        <div v-if="nextEvent" class="bg-blue-600 bg-opacity-30 rounded-lg p-4 border-l-4 border-blue-400">
+                        <div v-if="nextEvent" class="rounded-lg p-4 border-l-4"
+                             :class="currentTheme.upNextClass">
                             <p class="text-sm opacity-70 mb-1">Up Next</p>
                             <p class="text-lg font-semibold">{{ nextEvent.title }}</p>
                             <p class="text-sm opacity-80">{{ nextEvent.start }}</p>
@@ -206,12 +226,12 @@
                         
                         <!-- Today's Events -->
                         <div v-if="todayEvents.length === 0" class="text-center opacity-50 py-8">
-                            <p class="text-4xl mb-2">🌴</p>
+                            <p class="text-4xl mb-2">{{ currentTheme.emoji }}</p>
                             <p>No events today!</p>
                             <p class="text-sm">Time to relax!</p>
                         </div>
                         
-                        <div v-for="(event, index) in todayEvents" :key="event.id"
+                        <div v-for="event in todayEvents" :key="event.id"
                              class="bg-white bg-opacity-10 rounded-lg p-3 flex items-center gap-3"
                              :class="{ 'opacity-50': event.isPast }">
                             <div class="w-2 h-12 rounded-full" :style="{ backgroundColor: event.color }"></div>
@@ -342,13 +362,128 @@
             setup() {
                 const currentDate = ref('');
                 const currentTime = ref('');
-                const kaiMessage = ref('Hello! I\'m Kai. Tap me for a surprise!');
+                const kaiMessage = ref('Hello! I am Kai. Tap me for a surprise!');
                 const isListening = ref(false);
                 const weekDays = ref([]);
                 const sleepMode = ref(false);
-                const sleepMessage = ref('Dreaming of tomorrow\'s adventures...');
                 const API_URL = 'http://localhost:8000';
                 let idleTimer = null;
+                let themeRotationTimer = null;
+                
+                // Touch handling for swipe
+                const touchStartX = ref(0);
+                const touchEndX = ref(0);
+                
+                // Theme system
+                const currentThemeIndex = ref(0);
+                
+                const allThemes = {
+                    default: {
+                        id: 'default',
+                        name: 'Classic Kai',
+                        emoji: '🦞',
+                        background: 'bg-gradient-to-br from-blue-900 via-purple-900 to-blue-900',
+                        bodyColor: '#3b82f6',
+                        bodyLight: '#60a5fa',
+                        bodyDark: '#1e40af',
+                        accent: '#f59e0b',
+                        glowColor: '#3b82f6',
+                        message: 'Dreaming of tomorrow adventures...',
+                        upNextClass: 'bg-blue-600 bg-opacity-30 border-blue-400'
+                    },
+                    ireland: {
+                        id: 'ireland',
+                        name: 'Ireland',
+                        emoji: '☘️',
+                        background: 'bg-gradient-to-br from-green-800 via-emerald-600 to-green-900',
+                        bodyColor: '#059669',
+                        bodyLight: '#34d399',
+                        bodyDark: '#065f46',
+                        accent: '#f97316',
+                        glowColor: '#10b981',
+                        message: 'Sure it is a lovely day for the craic!',
+                        upNextClass: 'bg-green-600 bg-opacity-30 border-green-400'
+                    },
+                    spain: {
+                        id: 'spain',
+                        name: 'Spain',
+                        emoji: '💃',
+                        background: 'bg-gradient-to-br from-red-700 via-yellow-600 to-red-800',
+                        bodyColor: '#dc2626',
+                        bodyLight: '#fbbf24',
+                        bodyDark: '#991b1b',
+                        accent: '#fbbf24',
+                        glowColor: '#f59e0b',
+                        message: '¡Olé! Viva la fiesta! Celeste would be proud!',
+                        upNextClass: 'bg-red-600 bg-opacity-30 border-red-400'
+                    },
+                    thailand: {
+                        id: 'thailand',
+                        name: 'Thailand',
+                        emoji: '🙏',
+                        background: 'bg-gradient-to-br from-blue-600 via-purple-500 to-red-600',
+                        bodyColor: '#2563eb',
+                        bodyLight: '#a78bfa',
+                        bodyDark: '#1e40af',
+                        accent: '#fbbf24',
+                        glowColor: '#fbbf24',
+                        message: 'Sawasdee! Thinking of Thai temples and beaches...',
+                        upNextClass: 'bg-purple-600 bg-opacity-30 border-purple-400'
+                    },
+                    halloween: {
+                        id: 'halloween',
+                        name: 'Halloween',
+                        emoji: '🎃',
+                        background: 'bg-gradient-to-br from-orange-600 via-purple-900 to-black',
+                        bodyColor: '#ea580c',
+                        bodyLight: '#a855f7',
+                        bodyDark: '#7c2d12',
+                        accent: '#84cc16',
+                        glowColor: '#a855f7',
+                        message: 'Spooky scary skeletons... boo! 👻',
+                        upNextClass: 'bg-orange-600 bg-opacity-30 border-orange-400'
+                    },
+                    christmas: {
+                        id: 'christmas',
+                        name: 'Christmas',
+                        emoji: '🎄',
+                        background: 'bg-gradient-to-br from-red-800 via-green-700 to-red-900',
+                        bodyColor: '#dc2626',
+                        bodyLight: '#22c55e',
+                        bodyDark: '#991b1b',
+                        accent: '#fbbf24',
+                        glowColor: '#fbbf24',
+                        message: 'Ho ho ho! Merry Christmas from Kai! 🎅',
+                        upNextClass: 'bg-red-600 bg-opacity-30 border-red-400'
+                    },
+                    ailand: {
+                        id: 'ailand',
+                        name: 'AI Land',
+                        emoji: '🤖',
+                        background: 'bg-gradient-to-br from-cyan-900 via-blue-800 to-purple-900',
+                        bodyColor: '#0891b2',
+                        bodyLight: '#22d3ee',
+                        bodyDark: '#155e75',
+                        accent: '#a855f7',
+                        glowColor: '#22d3ee',
+                        message: 'Beep boop! Calculating optimal dreams...',
+                        upNextClass: 'bg-cyan-600 bg-opacity-30 border-cyan-400'
+                    }
+                };
+                
+                // For demo: show all themes
+                const activeThemes = computed(() => [
+                    allThemes.ireland,
+                    allThemes.spain,
+                    allThemes.thailand,
+                    allThemes.halloween,
+                    allThemes.christmas,
+                    allThemes.ailand
+                ]);
+                
+                const currentTheme = computed(() => {
+                    return activeThemes.value[currentThemeIndex.value] || allThemes.default;
+                });
                 
                 const sleepGreeting = computed(() => {
                     const hour = new Date().getHours();
@@ -376,6 +511,13 @@
                     return todayEvents.value.filter(e => e.isPast).length;
                 });
                 
+                const bubbleStyle = (index) => {
+                    const delays = ['0s', '1s', '2s', '3s'];
+                    return {
+                        animationDelay: delays[index % 4]
+                    };
+                };
+                
                 const updateTime = () => {
                     const now = new Date();
                     currentDate.value = now.toLocaleDateString('en-IE', { 
@@ -392,7 +534,7 @@
                 
                 const loadCalendar = async () => {
                     try {
-                        const response = await fetch(`${API_URL}/api/calendar/week`);
+                        const response = await fetch(API_URL + '/api/calendar/week');
                         const data = await response.json();
                         weekDays.value = data.days.map(day => ({
                             date: day.day_num,
@@ -412,33 +554,33 @@
                 };
                 
                 const interactWithKai = async () => {
-                    kaiMessage.value = "Thinking... 🤔";
+                    kaiMessage.value = 'Thinking... 🤔';
                     resetIdleTimer();
                     try {
-                        const response = await fetch(`${API_URL}/api/kai/interact`, {
+                        const response = await fetch(API_URL + '/api/kai/interact', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({trigger: 'tap'})
                         });
                         const data = await response.json();
-                        kaiMessage.value = data.message || "Hello! I'm Kai!";
+                        kaiMessage.value = data.message || 'Hello! I am Kai!';
                     } catch (e) {
                         const responses = [
-                            "Did you know? Lobsters can live to be 100 years old! 🦞",
-                            "¡Olé! Kelligh, you are fantastico! 💃",
-                            "Sawasdee! That's Hello in Thai! 🇹🇭",
-                            "Mammy is the best! Give her a hug! 🤗",
-                            "Kelligh, you're doing amazing today! ⭐",
-                            "Today's going to be a great day! ☀️",
-                            "Bart is such a good doggo! 🐕",
-                            "I'm learning new things every night! 📚"
+                            'Did you know? Lobsters can live to be 100 years old! 🦞',
+                            '¡Olé! Kelligh, you are fantastico! 💃',
+                            'Sawasdee! That is Hello in Thai! 🇹🇭',
+                            'Mammy is the best! Give her a hug! 🤗',
+                            'Kelligh, you are doing amazing today! ⭐',
+                            'Today is going to be a great day! ☀️',
+                            'Bart is such a good doggo! 🐕',
+                            'I am learning new things every night! 📚'
                         ];
                         kaiMessage.value = responses[Math.floor(Math.random() * responses.length)];
                     }
                 };
                 
                 const addEvent = () => {
-                    kaiMessage.value = "Say: 'Hey Kai, add event for...'";
+                    kaiMessage.value = 'Say: Hey Kai, add event for...';
                     isListening.value = true;
                     resetIdleTimer();
                     setTimeout(() => { isListening.value = false; }, 3000);
@@ -446,55 +588,90 @@
                 
                 const askKai = () => {
                     isListening.value = true;
-                    kaiMessage.value = "Listening... 👂";
+                    kaiMessage.value = 'Listening... 👂';
                     resetIdleTimer();
                     setTimeout(() => {
                         isListening.value = false;
-                        kaiMessage.value = "I heard you! What would you like to know?";
+                        kaiMessage.value = 'I heard you! What would you like to know?';
                     }, 3000);
                 };
                 
                 const getWordOfDay = async () => {
                     resetIdleTimer();
                     try {
-                        const response = await fetch(`${API_URL}/api/kai/interact`, {
+                        const response = await fetch(API_URL + '/api/kai/interact', {
                             method: 'POST',
                             headers: {'Content-Type': 'application/json'},
                             body: JSON.stringify({trigger: 'word'})
                         });
                         const data = await response.json();
                         if (data.type === 'word_of_the_day') {
-                            kaiMessage.value = `${data.language} Word: "${data.word}" means "${data.english}" (${data.pronunciation})`;
+                            kaiMessage.value = data.language + ' Word: "' + data.word + '" means "' + data.english + '" (' + data.pronunciation + ')';
                         }
                     } catch (e) {
-                        kaiMessage.value = "Word of the day: 'Agua' (Spanish) = Water 💧";
+                        kaiMessage.value = 'Word of the day: Agua (Spanish) = Water 💧';
+                    }
+                };
+                
+                const nextTheme = () => {
+                    currentThemeIndex.value = (currentThemeIndex.value + 1) % activeThemes.value.length;
+                };
+                
+                const prevTheme = () => {
+                    currentThemeIndex.value = (currentThemeIndex.value - 1 + activeThemes.value.length) % activeThemes.value.length;
+                };
+                
+                const setTheme = (index) => {
+                    currentThemeIndex.value = index;
+                };
+                
+                const handleTouchStart = (e) => {
+                    touchStartX.value = e.changedTouches[0].screenX;
+                };
+                
+                const handleTouchEnd = (e) => {
+                    touchEndX.value = e.changedTouches[0].screenX;
+                    handleSwipe();
+                };
+                
+                const handleSwipe = () => {
+                    const swipeThreshold = 50;
+                    const diff = touchStartX.value - touchEndX.value;
+                    
+                    if (Math.abs(diff) > swipeThreshold) {
+                        if (diff > 0) {
+                            nextTheme();
+                        } else {
+                            prevTheme();
+                        }
                     }
                 };
                 
                 const enterSleepMode = () => {
                     sleepMode.value = true;
-                    const sleepMessages = [
-                        "Dreaming of tomorrow's adventures...",
-                        "Resting my claws for tomorrow...",
-                        "Counting lobsters instead of sheep...",
-                        "Thinking of new jokes for Kelligh...",
-                        "Planning my next outfit...",
-                        "Dreaming of Thai beaches and Spanish festivals..."
-                    ];
-                    sleepMessage.value = sleepMessages[Math.floor(Math.random() * sleepMessages.length)];
+                    currentThemeIndex.value = 0;
+                    
+                    // Auto-rotate themes every 10 seconds
+                    if (themeRotationTimer) clearInterval(themeRotationTimer);
+                    themeRotationTimer = setInterval(() => {
+                        if (sleepMode.value && activeThemes.value.length > 1) {
+                            nextTheme();
+                        }
+                    }, 10000);
                 };
                 
                 const wakeUp = () => {
                     sleepMode.value = false;
+                    if (themeRotationTimer) clearInterval(themeRotationTimer);
                     resetIdleTimer();
-                    kaiMessage.value = "Good to see you! ☀️";
+                    kaiMessage.value = 'Good to see you! ☀️';
                 };
                 
                 const resetIdleTimer = () => {
                     if (idleTimer) clearTimeout(idleTimer);
                     idleTimer = setTimeout(() => {
                         if (!sleepMode.value) enterSleepMode();
-                    }, 120000); // 2 minutes idle = sleep mode
+                    }, 120000);
                 };
                 
                 onMounted(() => {
@@ -504,7 +681,6 @@
                     setInterval(loadCalendar, 300000);
                     resetIdleTimer();
                     
-                    // Listen for activity to reset timer
                     document.addEventListener('click', resetIdleTimer);
                     document.addEventListener('touchstart', resetIdleTimer);
                 });
@@ -516,17 +692,25 @@
                     kaiMessage,
                     isListening,
                     sleepMode,
-                    sleepMessage,
                     sleepGreeting,
                     todayEvents,
                     nextEvent,
                     completedEvents,
+                    currentTheme,
+                    currentThemeIndex,
+                    activeThemes,
+                    bubbleStyle,
                     interactWithKai,
                     addEvent,
                     askKai,
                     getWordOfDay,
                     enterSleepMode,
-                    wakeUp
+                    wakeUp,
+                    nextTheme,
+                    prevTheme,
+                    setTheme,
+                    handleTouchStart,
+                    handleTouchEnd
                 };
             }
         }).mount('#app');
