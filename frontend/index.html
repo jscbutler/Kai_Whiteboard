@@ -101,6 +101,76 @@
         .swipe-hint {
             animation: swipeHint 2s ease-in-out infinite;
         }
+        
+        /* Floating decorative elements */
+        @keyframes floatDecor {
+            0%, 100% { transform: translateY(0) rotate(0deg); }
+            25% { transform: translateY(-20px) rotate(5deg); }
+            50% { transform: translateY(-10px) rotate(0deg); }
+            75% { transform: translateY(-30px) rotate(-5deg); }
+        }
+        
+        @keyframes drift {
+            0% { transform: translateX(-100px) translateY(0); opacity: 0; }
+            10% { opacity: 0.6; }
+            90% { opacity: 0.6; }
+            100% { transform: translateX(calc(100vw + 100px)) translateY(-50px); opacity: 0; }
+        }
+        
+        @keyframes fall {
+            0% { transform: translateY(-100px) rotate(0deg); opacity: 0; }
+            10% { opacity: 0.8; }
+            90% { opacity: 0.8; }
+            100% { transform: translateY(calc(100vh + 100px)) rotate(360deg); opacity: 0; }
+        }
+        
+        @keyframes twinkle {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 1; transform: scale(1.2); }
+        }
+        
+        @keyframes dance {
+            0%, 100% { transform: rotate(-10deg) translateY(0); }
+            25% { transform: rotate(10deg) translateY(-10px); }
+            50% { transform: rotate(-5deg) translateY(0); }
+            75% { transform: rotate(15deg) translateY(-5px); }
+        }
+        
+        .floating-decor {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: floatDecor 4s ease-in-out infinite;
+        }
+        
+        .drifting-decor {
+            position: absolute;
+            font-size: 2.5rem;
+            pointer-events: none;
+            animation: drift 15s linear infinite;
+        }
+        
+        .falling-decor {
+            position: absolute;
+            font-size: 2rem;
+            pointer-events: none;
+            animation: fall 10s linear infinite;
+        }
+        
+        .twinkling-decor {
+            position: absolute;
+            font-size: 1.5rem;
+            pointer-events: none;
+            animation: twinkle 2s ease-in-out infinite;
+        }
+        
+        .dancing-decor {
+            position: absolute;
+            font-size: 3rem;
+            pointer-events: none;
+            animation: dance 2s ease-in-out infinite;
+            transform-origin: bottom center;
+        }
     </style>
 </head>
 <body class="bg-gray-900 text-white h-screen w-screen overflow-hidden">
@@ -124,6 +194,64 @@
                 <!-- Theme decorations -->
                 <div class="absolute top-4 left-4 text-6xl opacity-20">{{ currentTheme.emoji }}</div>
                 <div class="absolute bottom-4 right-4 text-6xl opacity-20">{{ currentTheme.emoji }}</div>
+                
+                <!-- Floating themed decorations -->
+                <div v-if="currentTheme.id === 'ireland'">
+                    <div class="floating-decor" style="top: 15%; left: 8%; animation-delay: 0s;">☘️</div>
+                    <div class="floating-decor" style="top: 60%; left: 5%; animation-delay: 1s;">🍀</div>
+                    <div class="floating-decor" style="top: 25%; right: 10%; animation-delay: 2s;">☘️</div>
+                    <div class="drifting-decor" style="top: 40%; animation-delay: 0s;">🪙</div>
+                    <div class="drifting-decor" style="top: 70%; animation-delay: 5s;">🌈</div>
+                </div>
+                
+                <div v-if="currentTheme.id === 'spain'">
+                    <div class="dancing-decor" style="bottom: 30%; left: 10%;">💃</div>
+                    <div class="dancing-decor" style="bottom: 20%; right: 15%; animation-delay: 0.5s;">🕺</div>
+                    <div class="floating-decor" style="top: 20%; left: 15%; animation-delay: 0s;">🌹</div>
+                    <div class="floating-decor" style="top: 50%; right: 8%; animation-delay: 1.5s;">🪭</div>
+                    <div class="drifting-decor" style="top: 35%; animation-delay: 2s;">🎸</div>
+                </div>
+                
+                <div v-if="currentTheme.id === 'thailand'">
+                    <div class="floating-decor" style="top: 10%; left: 12%; animation-delay: 0s;">🏮</div>
+                    <div class="floating-decor" style="top: 45%; left: 5%; animation-delay: 1.2s;">🪷</div>
+                    <div class="floating-decor" style="top: 30%; right: 12%; animation-delay: 2s;">🏮</div>
+                    <div class="floating-decor" style="bottom: 35%; right: 8%; animation-delay: 0.8s;">🙏</div>
+                    <div class="drifting-decor" style="top: 55%; animation-delay: 3s;">🐘</div>
+                </div>
+                
+                <div v-if="currentTheme.id === 'halloween'">
+                    <div class="floating-decor" style="top: 12%; left: 10%; animation-delay: 0s;">🎃</div>
+                    <div class="floating-decor" style="top: 55%; left: 6%; animation-delay: 1s;">👻</div>
+                    <div class="floating-decor" style="top: 20%; right: 10%; animation-delay: 2s;">🦇</div>
+                    <div class="floating-decor" style="bottom: 40%; right: 12%; animation-delay: 0.5s;">🧙</div>
+                    <div class="falling-decor" style="left: 20%; animation-delay: 0s;">🕷️</div>
+                    <div class="falling-decor" style="left: 60%; animation-delay: 3s;">🕸️</div>
+                    <div class="falling-decor" style="left: 80%; animation-delay: 6s;">🎃</div>
+                </div>
+                
+                <div v-if="currentTheme.id === 'christmas'">
+                    <div class="falling-decor" style="left: 10%; animation-delay: 0s;">❄️</div>
+                    <div class="falling-decor" style="left: 30%; animation-delay: 2s;">🌨️</div>
+                    <div class="falling-decor" style="left: 50%; animation-delay: 4s;">❄️</div>
+                    <div class="falling-decor" style="left: 70%; animation-delay: 1s;">🌨️</div>
+                    <div class="falling-decor" style="left: 85%; animation-delay: 3s;">❄️</div>
+                    <div class="floating-decor" style="top: 15%; left: 15%; animation-delay: 0s;">🦌</div>
+                    <div class="floating-decor" style="top: 50%; right: 10%; animation-delay: 1s;">🧝</div>
+                    <div class="floating-decor" style="bottom: 30%; left: 8%; animation-delay: 2s;">🎁</div>
+                    <div class="twinkling-decor" style="top: 25%; left: 25%;">⭐</div>
+                    <div class="twinkling-decor" style="top: 40%; right: 20%; animation-delay: 0.5s;">✨</div>
+                </div>
+                
+                <div v-if="currentTheme.id === 'ailand'">
+                    <div class="floating-decor" style="top: 15%; left: 10%; animation-delay: 0s; opacity: 0.5; font-family: monospace; font-size: 1rem; color: #22d3ee;">0101</div>
+                    <div class="floating-decor" style="top: 40%; left: 5%; animation-delay: 1s; opacity: 0.4; font-family: monospace; font-size: 0.9rem; color: #a855f7;">AI</div>
+                    <div class="floating-decor" style="top: 25%; right: 12%; animation-delay: 2s; opacity: 0.5; font-family: monospace; font-size: 1.1rem; color: #22d3ee;">1010</div>
+                    <div class="floating-decor" style="bottom: 35%; right: 8%; animation-delay: 0.8s; opacity: 0.4; font-family: monospace; font-size: 1rem; color: #a855f7;">KAI</div>
+                    <div class="twinkling-decor" style="top: 20%; left: 20%;">⚡</div>
+                    <div class="twinkling-decor" style="top: 60%; right: 15%; animation-delay: 0.3s;">💾</div>
+                    <div class="twinkling-decor" style="bottom: 25%; left: 30%; animation-delay: 0.7s;">🌐</div>
+                </div>
                 
                 <!-- Swipe indicators -->
                 <div v-if="activeThemes.length > 1" class="absolute inset-y-0 left-4 flex items-center">
