@@ -1,0 +1,281 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <title>Kai Family Whiteboard</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        /* Kiosk mode styles */
+        body {
+            overflow: hidden;
+            touch-action: none;
+            user-select: none;
+        }
+        
+        /* Kai Avatar Animations */
+        @keyframes wiggle {
+            0%, 100% { transform: rotate(-3deg); }
+            50% { transform: rotate(3deg); }
+        }
+        
+        @keyframes float {
+            0%, 100% { transform: translateY(0); }
+            50% { transform: translateY(-10px); }
+        }
+        
+        .kai-avatar {
+            animation: float 3s ease-in-out infinite;
+        }
+        
+        .kai-antennae {
+            animation: wiggle 2s ease-in-out infinite;
+            transform-origin: bottom;
+        }
+        
+        /* Seasonal themes */
+        .theme-easter {
+            --primary: #FFB7C5;
+            --secondary: #98FB98;
+            --accent: #FFD700;
+        }
+        
+        .theme-halloween {
+            --primary: #FF6B35;
+            --secondary: #1a1a2e;
+            --accent: #9d4edd;
+        }
+        
+        .theme-christmas {
+            --primary: #c41e3a;
+            --secondary: #165b33;
+            --accent: #FFD700;
+        }
+        
+        .theme-default {
+            --primary: #3b82f6;
+            --secondary: #1e40af;
+            --accent: #f59e0b;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white h-screen w-screen overflow-hidden theme-default">
+    <div id="app" class="h-full w-full flex flex-col">
+        <!-- Header -->
+        <header class="flex justify-between items-center p-4 bg-opacity-20 bg-black">
+            <div class="flex items-center gap-4">
+                <div class="text-2xl font-bold">
+                    {{ currentDate }}
+                </div>
+                <div class="text-xl opacity-80">
+                    {{ currentTime }}
+                </div>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-sm opacity-60">Weather:</span>
+                <span>☀️ 12°C</span>
+            </div>
+        </header>
+        
+        <!-- Main Content -->
+        <main class="flex-1 flex overflow-hidden">
+            <!-- Calendar View -->
+            <div class="flex-1 p-4 overflow-y-auto">
+                <div class="grid grid-cols-7 gap-2 h-full">
+                    <!-- Day headers -->
+                    <div v-for="day in ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']" 
+                         :key="day"
+                         class="text-center font-bold text-lg opacity-80">
+                        {{ day }}
+                    </div>
+                    
+                    <!-- Day cells -->
+                    <div v-for="(day, index) in weekDays" 
+                         :key="index"
+                         class="border border-white border-opacity-20 rounded-lg p-2 min-h-[120px]"
+                         :class="{ 'bg-white bg-opacity-10': day.isToday }">
+                        <div class="text-sm opacity-60">{{ day.date }}</div>
+                        <!-- Events -->
+                        <div v-for="event in day.events" 
+                             :key="event.id"
+                             class="mt-1 p-1 rounded text-xs truncate"
+                             :style="{ backgroundColor: event.color }">
+                            {{ event.title }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Kai Panel -->
+            <div class="w-80 p-4 flex flex-col items-center justify-center border-l border-white border-opacity-20">
+                <!-- Kai Avatar -->
+                <div class="kai-avatar relative cursor-pointer" @click="interactWithKai">
+                    <!-- Placeholder for Kai SVG -->
+                    <div class="w-48 h-48 bg-blue-500 rounded-full flex items-center justify-center text-6xl">
+                        🦞
+                    </div>
+                    <!-- Status indicator -->
+                    <div class="absolute bottom-2 right-2 w-4 h-4 bg-green-500 rounded-full animate-pulse"></div>
+                </div>
+                
+                <!-- Kai Message -->
+                <div class="mt-4 p-4 bg-white bg-opacity-10 rounded-lg max-w-xs text-center">
+                    <p class="text-lg">{{ kaiMessage }}</p>
+                </div>
+                
+                <!-- Voice indicator -->
+                <div v-if="isListening" class="mt-4 flex items-center gap-2">
+                    <div class="w-3 h-3 bg-red-500 rounded-full animate-pulse"></div>
+                    <span class="text-sm">Listening...</span>
+                </div>
+                
+                <!-- Quick actions -->
+                <div class="mt-8 flex flex-wrap gap-2 justify-center">
+                    <button @click="addEvent" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+                        + Event
+                    </button>
+                    <button @click="askKai" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition">
+                        Ask Kai
+                    </button>
+                    <button @click="getWordOfDay" class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition">
+                        🌍 Word
+                    </button>
+                    <button @click="interactWithKai" class="px-4 py-2 bg-orange-500 rounded-lg hover:bg-orange-600 transition">
+                        🦞 Surprise!
+                    </button>
+                </div>
+            </div>
+        </main>
+    </div>
+    
+    <script>
+        const { createApp, ref, onMounted } = Vue;
+        
+        createApp({
+            setup() {
+                const currentDate = ref('');
+                const currentTime = ref('');
+                const kaiMessage = ref('Hello! I\'m Kai. Tap me for a surprise!');
+                const isListening = ref(false);
+                const weekDays = ref([]);
+                const family = ref({});
+                const API_URL = 'http://localhost:8000';
+                
+                const updateTime = () => {
+                    const now = new Date();
+                    currentDate.value = now.toLocaleDateString('en-IE', { 
+                        weekday: 'long', 
+                        year: 'numeric', 
+                        month: 'long', 
+                        day: 'numeric' 
+                    });
+                    currentTime.value = now.toLocaleTimeString('en-IE', { 
+                        hour: '2-digit', 
+                        minute: '2-digit' 
+                    });
+                };
+                
+                const loadCalendar = async () => {
+                    try {
+                        const response = await fetch(`${API_URL}/api/calendar/week`);
+                        const data = await response.json();
+                        weekDays.value = data.days.map(day => ({
+                            date: day.day_num,
+                            fullDate: day.date,
+                            dayName: day.day_name,
+                            isToday: day.is_today,
+                            events: day.events.map(e => ({
+                                id: e.id,
+                                title: e.title,
+                                color: e.color,
+                                start: new Date(e.start).toLocaleTimeString('en-IE', {hour: '2-digit', minute:'2-digit'})
+                            }))
+                        }));
+                    } catch (e) {
+                        console.error('Failed to load calendar:', e);
+                        kaiMessage.value = "Oops! Couldn't load calendar. Try again!";
+                    }
+                };
+                
+                const interactWithKai = async () => {
+                    kaiMessage.value = "Thinking... 🤔";
+                    try {
+                        const response = await fetch(`${API_URL}/api/kai/interact`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({trigger: 'tap'})
+                        });
+                        const data = await response.json();
+                        kaiMessage.value = data.message || "Hello! I'm Kai!";
+                    } catch (e) {
+                        const responses = [
+                            "Did you know? Lobsters can live to be 100 years old! 🦞",
+                            "¡Olé! Kelligh, you are fantastico! 💃",
+                            "Sawasdee! That's Hello in Thai! 🇹🇭",
+                            "Mammy is the best! Give her a hug! 🤗",
+                            "Kelligh, you're doing amazing today! ⭐",
+                            "Today's going to be a great day! ☀️",
+                            "Bart is such a good doggo! 🐕",
+                            "I'm learning new things every night! 📚"
+                        ];
+                        kaiMessage.value = responses[Math.floor(Math.random() * responses.length)];
+                    }
+                };
+                
+                const addEvent = () => {
+                    kaiMessage.value = "Say: 'Hey Kai, add event for...'";
+                    isListening.value = true;
+                    setTimeout(() => { isListening.value = false; }, 3000);
+                };
+                
+                const askKai = () => {
+                    isListening.value = true;
+                    kaiMessage.value = "Listening... 👂";
+                    setTimeout(() => {
+                        isListening.value = false;
+                        kaiMessage.value = "I heard you! What would you like to know?";
+                    }, 3000);
+                };
+                
+                const getWordOfDay = async () => {
+                    try {
+                        const response = await fetch(`${API_URL}/api/kai/interact`, {
+                            method: 'POST',
+                            headers: {'Content-Type': 'application/json'},
+                            body: JSON.stringify({trigger: 'word'})
+                        });
+                        const data = await response.json();
+                        if (data.type === 'word_of_the_day') {
+                            kaiMessage.value = `${data.language} Word: "${data.word}" means "${data.english}" (${data.pronunciation})`;
+                        }
+                    } catch (e) {
+                        kaiMessage.value = "Word of the day: 'Agua' (Spanish) = Water 💧";
+                    }
+                };
+                
+                onMounted(() => {
+                    updateTime();
+                    setInterval(updateTime, 1000);
+                    loadCalendar();
+                    // Refresh calendar every 5 minutes
+                    setInterval(loadCalendar, 300000);
+                });
+                
+                return {
+                    currentDate,
+                    currentTime,
+                    weekDays,
+                    kaiMessage,
+                    isListening,
+                    interactWithKai,
+                    addEvent,
+                    askKai,
+                    getWordOfDay
+                };
+            }
+        }).mount('#app');
+    </script>
+</body>
+</html>
