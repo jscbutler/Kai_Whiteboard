@@ -468,8 +468,11 @@
                         <button @click="addEvent" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition">
                             + Event
                         </button>
+                        <button @click="dailyBrief" class="px-4 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition">
+                            📢 Daily Brief
+                        </button>
                         <button @click="askKai" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition">
-                            Ask Kai
+                            🎤 Ask Kai
                         </button>
                         <button @click="getWordOfDay" class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition">
                             🌍 Word
@@ -681,9 +684,31 @@
                     }
                 };
                 
+                // Greeting variations for when Kai is tapped
+                const greetings = [
+                    'Hey Family! 👋',
+                    'Sawasdee Family! 🙏',
+                    '¡Hola Familia! 💃',
+                    'Dia duit! (Hello in Irish!) ☘️',
+                    'Konnichiwa Family! 🌸',
+                    'Hey there, lovely family! 🦞',
+                    'Good to see you all! ✨',
+                    'What is happening, family? 🎉',
+                    'Kai is here! What do you need? 🦞💪',
+                    'Hello Butler family! 💙'
+                ];
+                
                 const interactWithKai = async () => {
                     kaiMessage.value = 'Thinking... 🤔';
                     resetIdleTimer();
+                    
+                    // Random greeting
+                    const greeting = greetings[Math.floor(Math.random() * greetings.length)];
+                    kaiMessage.value = greeting;
+                    
+                    // Speak the greeting
+                    speakText(greeting);
+                    
                     try {
                         const response = await fetch(API_URL + '/api/kai/interact', {
                             method: 'POST',
@@ -691,20 +716,62 @@
                             body: JSON.stringify({trigger: 'tap'})
                         });
                         const data = await response.json();
-                        kaiMessage.value = data.message || 'Hello! I am Kai!';
+                        if (data.message) {
+                            kaiMessage.value = data.message;
+                            speakText(data.message);
+                        }
                     } catch (e) {
-                        const responses = [
-                            'Did you know? Lobsters can live to be 100 years old! 🦞',
-                            '¡Olé! Kelligh, you are fantastico! 💃',
-                            'Sawasdee! That is Hello in Thai! 🇹🇭',
-                            'Mammy is the best! Give her a hug! 🤗',
-                            'Kelligh, you are doing amazing today! ⭐',
-                            'Today is going to be a great day! ☀️',
-                            'Bart is such a good doggo! 🐕',
-                            'I am learning new things every night! 📚'
-                        ];
-                        kaiMessage.value = responses[Math.floor(Math.random() * responses.length)];
+                        // Fallback handled above with greeting
                     }
+                };
+                
+                // Text-to-speech function
+                const speakText = (text) => {
+                    if ('speechSynthesis' in window) {
+                        // Remove emojis for speech
+                        const cleanText = text.replace(/[\u{1F600}-\u{1F64F}]|[\u{1F300}-\u{1F5FF}]|[\u{1F680}-\u{1F6FF}]|[\u{1F1E0}-\u{1F1FF}]|[\u{2600}-\u{26FF}]|[\u{2700}-\u{27BF}]/gu, '');
+                        const utterance = new SpeechSynthesisUtterance(cleanText);
+                        utterance.rate = 1;
+                        utterance.pitch = 1.1;
+                        window.speechSynthesis.speak(utterance);
+                    }
+                };
+                
+                // Daily Brief - reads today's events out loud
+                const dailyBrief = () => {
+                    resetIdleTimer();
+                    
+                    if (todayEvents.value.length === 0) {
+                        const msg = 'Good morning family! You have no events scheduled for today. Enjoy your free time!';
+                        kaiMessage.value = msg;
+                        speakText(msg);
+                        return;
+                    }
+                    
+                    let brief = 'Good morning family! Here is your daily brief. ';
+                    brief += 'You have ' + todayEvents.value.length + ' events today. ';
+                    
+                    const upcoming = todayEvents.value.filter(e => !e.isPast);
+                    const completed = todayEvents.value.filter(e => e.isPast);
+                    
+                    if (completed.length > 0) {
+                        brief += 'You have already completed ' + completed.length + ' events. Great job! ';
+                    }
+                    
+                    if (upcoming.length > 0) {
+                        brief += 'Coming up: ';
+                        upcoming.forEach((event, idx) => {
+                            brief += event.title + ' at ' + event.start;
+                            if (idx < upcoming.length - 1) {
+                                brief += ', then ';
+                            }
+                        });
+                    } else if (completed.length > 0) {
+                        brief += 'You have completed all your events for today. Well done!';
+                    }
+                    
+                    kaiMessage.value = brief;
+                    speakText(brief);
                 };
                 
                 const addEvent = () => {
@@ -832,6 +899,7 @@
                     addEvent,
                     askKai,
                     getWordOfDay,
+                    dailyBrief,
                     enterSleepMode,
                     wakeUp,
                     nextTheme,
