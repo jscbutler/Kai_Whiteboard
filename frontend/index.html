@@ -7,7 +7,58 @@
     <title>Kai Family Whiteboard</title>
     <script src="https://unpkg.com/vue@3/dist/vue.global.js"></script>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="icons.js"></script>
     <style>
+        /* Custom Icon Styles */
+        .floating-icon, .drifting-icon, .falling-icon, .twinkling-icon {
+            position: absolute;
+            width: 2rem;
+            height: 2rem;
+            pointer-events: none;
+        }
+        
+        .floating-icon {
+            animation: floatDecor 4s ease-in-out infinite;
+        }
+        
+        .floating-icon svg, .drifting-icon svg, .falling-icon svg, .twinkling-icon svg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .floating-icon.dancing {
+            animation: dance 2s ease-in-out infinite;
+            transform-origin: bottom center;
+        }
+        
+        .drifting-icon {
+            animation: drift 15s linear infinite;
+        }
+        
+        .falling-icon {
+            animation: fall 10s linear infinite;
+        }
+        
+        .twinkling-icon {
+            animation: twinkle 2s ease-in-out infinite;
+        }
+        
+        .icon-btn {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 0.5rem;
+        }
+        
+        .icon-btn svg {
+            width: 1.25rem;
+            height: 1.25rem;
+        }
+        
+        .icon-large {
+            width: 2rem;
+            height: 2rem;
+        }
         /* Kiosk mode styles */
         body {
             overflow: hidden;
@@ -191,66 +242,66 @@
                 <div class="ambient-bubble w-40 h-40 bottom-20 left-1/4 opacity-25" :style="bubbleStyle(2)"></div>
                 <div class="ambient-bubble w-20 h-20 top-1/3 left-1/3 opacity-15" :style="bubbleStyle(3)"></div>
                 
-                <!-- Theme decorations -->
-                <div class="absolute top-4 left-4 text-6xl opacity-20">{{ currentTheme.emoji }}</div>
-                <div class="absolute bottom-4 right-4 text-6xl opacity-20">{{ currentTheme.emoji }}</div>
+                <!-- Theme decorations - Custom SVG Icons -->
+                <div class="absolute top-4 left-4 w-16 h-16 opacity-30" v-html="getThemeIcon()"></div>
+                <div class="absolute bottom-4 right-4 w-16 h-16 opacity-30" v-html="getThemeIcon()"></div>
                 
-                <!-- Floating themed decorations -->
-                <div v-if="currentTheme.id === 'ireland'">
-                    <div class="floating-decor" style="top: 15%; left: 8%; animation-delay: 0s;">☘️</div>
-                    <div class="floating-decor" style="top: 60%; left: 5%; animation-delay: 1s;">🍀</div>
-                    <div class="floating-decor" style="top: 25%; right: 10%; animation-delay: 2s;">☘️</div>
-                    <div class="drifting-decor" style="top: 40%; animation-delay: 0s;">🪙</div>
-                    <div class="drifting-decor" style="top: 70%; animation-delay: 5s;">🌈</div>
+                <!-- Floating themed decorations - SVG Icons -->
+                <div v-if="currentTheme.id === 'ireland'" class="theme-decorations">
+                    <div class="floating-icon" style="top: 15%; left: 8%; animation-delay: 0s;" v-html="icons.shamrock"></div>
+                    <div class="floating-icon" style="top: 60%; left: 5%; animation-delay: 1s; color: #10b981;" v-html="icons.shamrock"></div>
+                    <div class="floating-icon" style="top: 25%; right: 10%; animation-delay: 2s; color: #059669;" v-html="icons.shamrock"></div>
+                    <div class="drifting-icon" style="top: 40%; animation-delay: 0s; color: rgba(255,255,255,0.4);" v-html="icons.cloud"></div>
+                    <div class="drifting-icon" style="top: 70%; animation-delay: 5s; color: rgba(255,255,255,0.3);" v-html="icons.rain"></div>
                 </div>
                 
-                <div v-if="currentTheme.id === 'spain'">
-                    <div class="dancing-decor" style="bottom: 30%; left: 10%;">💃</div>
-                    <div class="dancing-decor" style="bottom: 20%; right: 15%; animation-delay: 0.5s;">🕺</div>
-                    <div class="floating-decor" style="top: 20%; left: 15%; animation-delay: 0s;">🌹</div>
-                    <div class="floating-decor" style="top: 50%; right: 8%; animation-delay: 1.5s;">🪭</div>
-                    <div class="drifting-decor" style="top: 35%; animation-delay: 2s;">🎸</div>
+                <div v-if="currentTheme.id === 'spain'" class="theme-decorations">
+                    <div class="floating-icon dancing" style="bottom: 30%; left: 10%; color: #fbbf24;" v-html="icons.dancer"></div>
+                    <div class="floating-icon dancing" style="bottom: 20%; right: 15%; animation-delay: 0.5s; color: #fbbf24;" v-html="icons.dancer"></div>
+                    <div class="floating-icon" style="top: 20%; left: 15%; animation-delay: 0s; color: #fbbf24;" v-html="icons.sun"></div>
+                    <div class="floating-icon" style="top: 50%; right: 8%; animation-delay: 1.5s; color: #f59e0b;" v-html="icons.sun"></div>
+                    <div class="drifting-icon" style="top: 35%; animation-delay: 2s; color: rgba(255,255,255,0.4);" v-html="icons.sun"></div>
                 </div>
                 
-                <div v-if="currentTheme.id === 'thailand'">
-                    <div class="floating-decor" style="top: 10%; left: 12%; animation-delay: 0s;">🏮</div>
-                    <div class="floating-decor" style="top: 45%; left: 5%; animation-delay: 1.2s;">🪷</div>
-                    <div class="floating-decor" style="top: 30%; right: 12%; animation-delay: 2s;">🏮</div>
-                    <div class="floating-decor" style="bottom: 35%; right: 8%; animation-delay: 0.8s;">🙏</div>
-                    <div class="drifting-decor" style="top: 55%; animation-delay: 3s;">🐘</div>
+                <div v-if="currentTheme.id === 'thailand'" class="theme-decorations">
+                    <div class="floating-icon" style="top: 10%; left: 12%; animation-delay: 0s; color: #fbbf24;" v-html="icons.temple"></div>
+                    <div class="floating-icon" style="top: 45%; left: 5%; animation-delay: 1.2s; color: #fbbf24;" v-html="icons.sun"></div>
+                    <div class="floating-icon" style="top: 30%; right: 12%; animation-delay: 2s; color: #fbbf24;" v-html="icons.temple"></div>
+                    <div class="floating-icon" style="bottom: 35%; right: 8%; animation-delay: 0.8s; color: #fbbf24;" v-html="icons.temple"></div>
+                    <div class="drifting-icon" style="top: 55%; animation-delay: 3s; color: rgba(255,255,255,0.4);" v-html="icons.cloud"></div>
                 </div>
                 
-                <div v-if="currentTheme.id === 'halloween'">
-                    <div class="floating-decor" style="top: 12%; left: 10%; animation-delay: 0s;">🎃</div>
-                    <div class="floating-decor" style="top: 55%; left: 6%; animation-delay: 1s;">👻</div>
-                    <div class="floating-decor" style="top: 20%; right: 10%; animation-delay: 2s;">🦇</div>
-                    <div class="floating-decor" style="bottom: 40%; right: 12%; animation-delay: 0.5s;">🧙</div>
-                    <div class="falling-decor" style="left: 20%; animation-delay: 0s;">🕷️</div>
-                    <div class="falling-decor" style="left: 60%; animation-delay: 3s;">🕸️</div>
-                    <div class="falling-decor" style="left: 80%; animation-delay: 6s;">🎃</div>
+                <div v-if="currentTheme.id === 'halloween'" class="theme-decorations">
+                    <div class="floating-icon" style="top: 12%; left: 10%; animation-delay: 0s; color: #ea580c;" v-html="icons.pumpkin"></div>
+                    <div class="floating-icon" style="top: 55%; left: 6%; animation-delay: 1s; color: #a855f7;" v-html="icons.moon"></div>
+                    <div class="floating-icon" style="top: 20%; right: 10%; animation-delay: 2s; color: #a855f7;" v-html="icons.moon"></div>
+                    <div class="floating-icon" style="bottom: 40%; right: 12%; animation-delay: 0.5s; color: #84cc16;" v-html="icons.pumpkin"></div>
+                    <div class="falling-icon" style="left: 20%; animation-delay: 0s; color: #a855f7;" v-html="icons.cloud"></div>
+                    <div class="falling-icon" style="left: 60%; animation-delay: 3s; color: #a855f7;" v-html="icons.moon"></div>
+                    <div class="falling-icon" style="left: 80%; animation-delay: 6s; color: #ea580c;" v-html="icons.pumpkin"></div>
                 </div>
                 
-                <div v-if="currentTheme.id === 'christmas'">
-                    <div class="falling-decor" style="left: 10%; animation-delay: 0s;">❄️</div>
-                    <div class="falling-decor" style="left: 30%; animation-delay: 2s;">🌨️</div>
-                    <div class="falling-decor" style="left: 50%; animation-delay: 4s;">❄️</div>
-                    <div class="falling-decor" style="left: 70%; animation-delay: 1s;">🌨️</div>
-                    <div class="falling-decor" style="left: 85%; animation-delay: 3s;">❄️</div>
-                    <div class="floating-decor" style="top: 15%; left: 15%; animation-delay: 0s;">🦌</div>
-                    <div class="floating-decor" style="top: 50%; right: 10%; animation-delay: 1s;">🧝</div>
-                    <div class="floating-decor" style="bottom: 30%; left: 8%; animation-delay: 2s;">🎁</div>
-                    <div class="twinkling-decor" style="top: 25%; left: 25%;">⭐</div>
-                    <div class="twinkling-decor" style="top: 40%; right: 20%; animation-delay: 0.5s;">✨</div>
+                <div v-if="currentTheme.id === 'christmas'" class="theme-decorations">
+                    <div class="falling-icon" style="left: 10%; animation-delay: 0s; color: white;" v-html="icons.snow"></div>
+                    <div class="falling-icon" style="left: 30%; animation-delay: 2s; color: white;" v-html="icons.snow"></div>
+                    <div class="falling-icon" style="left: 50%; animation-delay: 4s; color: white;" v-html="icons.snow"></div>
+                    <div class="falling-icon" style="left: 70%; animation-delay: 1s; color: white;" v-html="icons.snow"></div>
+                    <div class="falling-icon" style="left: 85%; animation-delay: 3s; color: white;" v-html="icons.snow"></div>
+                    <div class="floating-icon" style="top: 15%; left: 15%; animation-delay: 0s; color: #22c55e;" v-html="icons.christmasTree"></div>
+                    <div class="floating-icon" style="top: 50%; right: 10%; animation-delay: 1s; color: #22c55e;" v-html="icons.christmasTree"></div>
+                    <div class="floating-icon" style="bottom: 30%; left: 8%; animation-delay: 2s; color: #dc2626;" v-html="icons.christmasTree"></div>
+                    <div class="twinkling-icon" style="top: 25%; left: 25%; color: #fbbf24;" v-html="icons.sun"></div>
+                    <div class="twinkling-icon" style="top: 40%; right: 20%; animation-delay: 0.5s; color: #fbbf24;" v-html="icons.sun"></div>
                 </div>
                 
-                <div v-if="currentTheme.id === 'ailand'">
-                    <div class="floating-decor" style="top: 15%; left: 10%; animation-delay: 0s; opacity: 0.5; font-family: monospace; font-size: 1rem; color: #22d3ee;">0101</div>
-                    <div class="floating-decor" style="top: 40%; left: 5%; animation-delay: 1s; opacity: 0.4; font-family: monospace; font-size: 0.9rem; color: #a855f7;">AI</div>
-                    <div class="floating-decor" style="top: 25%; right: 12%; animation-delay: 2s; opacity: 0.5; font-family: monospace; font-size: 1.1rem; color: #22d3ee;">1010</div>
-                    <div class="floating-decor" style="bottom: 35%; right: 8%; animation-delay: 0.8s; opacity: 0.4; font-family: monospace; font-size: 1rem; color: #a855f7;">KAI</div>
-                    <div class="twinkling-decor" style="top: 20%; left: 20%;">⚡</div>
-                    <div class="twinkling-decor" style="top: 60%; right: 15%; animation-delay: 0.3s;">💾</div>
-                    <div class="twinkling-decor" style="bottom: 25%; left: 30%; animation-delay: 0.7s;">🌐</div>
+                <div v-if="currentTheme.id === 'ailand'" class="theme-decorations">
+                    <div class="floating-icon" style="top: 15%; left: 10%; animation-delay: 0s; color: #22d3ee; opacity: 0.6;" v-html="icons.robot"></div>
+                    <div class="floating-icon" style="top: 40%; left: 5%; animation-delay: 1s; color: #a855f7; opacity: 0.5;" v-html="icons.robot"></div>
+                    <div class="floating-icon" style="top: 25%; right: 12%; animation-delay: 2s; color: #22d3ee; opacity: 0.6;" v-html="icons.robot"></div>
+                    <div class="floating-icon" style="bottom: 35%; right: 8%; animation-delay: 0.8s; color: #a855f7; opacity: 0.5;" v-html="icons.robot"></div>
+                    <div class="twinkling-icon" style="top: 20%; left: 20%; color: #22d3ee;" v-html="icons.cloud"></div>
+                    <div class="twinkling-icon" style="top: 60%; right: 15%; animation-delay: 0.3s; color: #a855f7;" v-html="icons.cloud"></div>
+                    <div class="twinkling-icon" style="bottom: 25%; left: 30%; animation-delay: 0.7s; color: #22d3ee;" v-html="icons.cloud"></div>
                 </div>
                 
                 <!-- Swipe indicators -->
@@ -340,7 +391,8 @@
                 <!-- Today's Tasks Sidebar -->
                 <div class="w-96 bg-black bg-opacity-40 backdrop-blur-sm p-6 flex flex-col">
                     <h2 class="text-2xl font-bold mb-6 flex items-center gap-2">
-                        📋 Today's Tasks
+                        <span class="w-6 h-6" v-html="icons.list"></span>
+                        Today's Tasks
                     </h2>
                     
                     <div class="flex-1 overflow-y-auto custom-scrollbar space-y-4">
@@ -354,7 +406,7 @@
                         
                         <!-- Today's Events -->
                         <div v-if="todayEvents.length === 0" class="text-center opacity-50 py-8">
-                            <p class="text-4xl mb-2">{{ currentTheme.emoji }}</p>
+                            <div class="w-16 h-16 mx-auto mb-2" v-html="getThemeIcon('2rem')"></div>
                             <p>No events today!</p>
                             <p class="text-sm">Time to relax!</p>
                         </div>
@@ -367,17 +419,21 @@
                                 <p class="font-medium">{{ event.title }}</p>
                                 <p class="text-sm opacity-70">{{ event.start }}</p>
                             </div>
-                            <div v-if="event.isPast" class="text-xs bg-gray-600 px-2 py-1 rounded">Done</div>
+                            <div v-if="event.isPast" class="flex items-center gap-1 text-xs bg-gray-600 px-2 py-1 rounded">
+                                <span class="w-3 h-3" v-html="icons.check"></span>
+                                Done
+                            </div>
                         </div>
                     </div>
                     
                     <!-- This Day in History -->
                     <div class="mt-4 pt-4 border-t border-white border-opacity-20">
                         <h3 class="text-lg font-semibold mb-2 flex items-center gap-2">
-                            📚 This Day in History
+                            <span class="w-5 h-5" v-html="icons.book"></span>
+                            This Day in History
                         </h3>
                         <div class="rounded-lg p-3 bg-white bg-opacity-10 border-l-4 border-yellow-400">
-                            <p class="text-sm font-medium mb-1">{{ todayInHistory.flag }} {{ todayInHistory.country }}</p>
+                            <p class="text-sm font-medium mb-1">{{ getCountryFlag() }} {{ todayInHistory.country }}</p>
                             <p class="text-sm opacity-90">{{ todayInHistory.text }}</p>
                         </div>
                     </div>
@@ -407,9 +463,13 @@
                 </div>
                 <div class="flex items-center gap-2">
                     <span class="text-sm opacity-60">Weather:</span>
-                    <span>☀️ 12°C</span>
-                    <button @click="enterSleepMode" class="ml-4 px-3 py-1 bg-white bg-opacity-10 rounded-lg hover:bg-opacity-20 transition text-sm">
-                        💤 Sleep
+                    <span class="flex items-center gap-1">
+                        <span class="w-5 h-5" v-html="icons.sun"></span>
+                        12°C
+                    </span>
+                    <button @click="enterSleepMode" class="ml-4 px-3 py-1 bg-white bg-opacity-10 rounded-lg hover:bg-opacity-20 transition text-sm flex items-center gap-1">
+                        <span class="w-4 h-4" v-html="icons.moon"></span>
+                        Sleep
                     </button>
                 </div>
             </header>
@@ -476,30 +536,37 @@
                     
                     <!-- Confirmation Buttons -->
                     <div v-if="pendingEvent" class="mt-4 flex gap-3">
-                        <button @click="confirmEvent" class="px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition text-xl">
-                            ✅ Confirm
+                        <button @click="confirmEvent" class="icon-btn px-6 py-3 bg-green-600 rounded-lg hover:bg-green-700 transition">
+                            <span class="w-6 h-6" v-html="icons.check"></span>
+                            Confirm
                         </button>
-                        <button @click="cancelEvent" class="px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition text-xl">
-                            ❌ Cancel
+                        <button @click="cancelEvent" class="icon-btn px-6 py-3 bg-red-600 rounded-lg hover:bg-red-700 transition">
+                            <span class="w-6 h-6" v-html="icons.x"></span>
+                            Cancel
                         </button>
                     </div>
                     
                     <!-- Quick actions -->
                     <div class="mt-8 flex flex-wrap gap-2 justify-center">
-                        <button @click="addEvent" class="px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition">
-                            + Event
+                        <button @click="addEvent" class="icon-btn px-4 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition">
+                            <span class="w-5 h-5" v-html="icons.plus"></span>
+                            Event
                         </button>
-                        <button @click="dailyBrief" class="px-4 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition">
-                            📢 Daily Brief
+                        <button @click="dailyBrief" class="icon-btn px-4 py-2 bg-yellow-600 rounded-lg hover:bg-yellow-700 transition">
+                            <span class="w-5 h-5" v-html="icons.megaphone"></span>
+                            Daily Brief
                         </button>
-                        <button @click="askKai" class="px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition">
-                            🎤 Ask Kai
+                        <button @click="askKai" class="icon-btn px-4 py-2 bg-green-600 rounded-lg hover:bg-green-700 transition">
+                            <span class="w-5 h-5" v-html="icons.microphone"></span>
+                            Ask Kai
                         </button>
-                        <button @click="getWordOfDay" class="px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition">
-                            🌍 Word
+                        <button @click="getWordOfDay" class="icon-btn px-4 py-2 bg-purple-600 rounded-lg hover:bg-purple-700 transition">
+                            <span class="w-5 h-5" v-html="icons.globe"></span>
+                            Word
                         </button>
-                        <button @click="interactWithKai" class="px-4 py-2 bg-orange-500 rounded-lg hover:bg-orange-600 transition">
-                            🦞 Surprise!
+                        <button @click="interactWithKai" class="icon-btn px-4 py-2 bg-orange-500 rounded-lg hover:bg-orange-600 transition">
+                            <span class="w-5 h-5" v-html="icons.surprise"></span>
+                            Surprise!
                         </button>
                     </div>
                 </div>
@@ -1072,7 +1139,7 @@
                     sleepMode.value = false;
                     if (themeRotationTimer) clearInterval(themeRotationTimer);
                     resetIdleTimer();
-                    kaiMessage.value = 'Good to see you! ☀️';
+                    kaiMessage.value = 'Good to see you!';
                 };
                 
                 const resetIdleTimer = () => {
@@ -1080,6 +1147,32 @@
                     idleTimer = setTimeout(() => {
                         if (!sleepMode.value) enterSleepMode();
                     }, 120000);
+                };
+                
+                // Icon system
+                const icons = ref(KAI_ICONS || {});
+                
+                const getThemeIcon = (size = '4rem') => {
+                    const themeIcons = {
+                        ireland: icons.value.shamrock,
+                        spain: icons.value.dancer,
+                        thailand: icons.value.temple,
+                        halloween: icons.value.pumpkin,
+                        christmas: icons.value.christmasTree,
+                        ailand: icons.value.robot,
+                        default: icons.value.sun
+                    };
+                    const icon = themeIcons[currentTheme.value.id] || icons.value.sun;
+                    return icon ? `<svg width="${size}" height="${size}" viewBox="0 0 24 24" fill="currentColor">${icon}</svg>` : '';
+                };
+                
+                const getCountryFlag = () => {
+                    const flags = {
+                        ireland: '🇮🇪',
+                        spain: '🇪🇸',
+                        thailand: '🇹🇭'
+                    };
+                    return flags[currentTheme.value.id] || '🌍';
                 };
                 
                 onMounted(() => {
@@ -1108,6 +1201,9 @@
                     currentThemeIndex,
                     activeThemes,
                     pendingEvent,
+                    icons,
+                    getThemeIcon,
+                    getCountryFlag,
                     bubbleStyle,
                     todayInHistory,
                     interactWithKai,
