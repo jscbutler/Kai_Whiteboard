@@ -82,6 +82,19 @@ class WeekView(BaseModel):
     people_legend: dict
 
 
+class VoiceCommand(BaseModel):
+    text: str
+    confirmed: Optional[bool] = False
+
+
+class VoiceResponse(BaseModel):
+    command: str
+    intent: str
+    confirmation_message: str
+    parsed_event: Optional[dict] = None
+    requires_confirmation: bool = True
+
+
 def fetch_google_calendar(start_date: datetime, end_date: datetime) -> List[Event]:
     """Fetch events from Google Calendar using gog"""
     import subprocess
@@ -346,45 +359,41 @@ async def interact_with_kai(trigger: str = "tap"):
     return {"type": "unknown", "message": "Hello! I'm Kai!", "expression": "happy"}
 
 
-@app.post("/api/voice/command")
-async def process_voice_command(command: dict):
+@app.post("/api/voice/command", response_model=VoiceResponse)
+async def process_voice_command(command: VoiceCommand):
     """
-    Process voice command and return response
+    Process voice command using LLM to parse natural language into event data
     """
-    text = command.get("text", "").lower()
+    from voice_parser import process_voice_command as parse_voice
     
-    # Simple intent parsing
-    if "when" in text and ("kelligh" in text or "swim" in text):
-        return {
-            "command": text,
-            "intent": "query_schedule",
-            "response": "Kelligh has swim class today at 6 PM!",
-            "action": "show_events"
-        }
+    result = parse_voice(command.text)
     
-    elif "add" in text or "create" in text:
-        return {
-            "command": text,
-            "intent": "add_event",
-            "response": "I heard you want to add an event. What should I call it?",
-            "action": "prompt_details"
-        }
+    # If confirmed, actually add the event
+    if command.confirmed and result.get("parsed_event"):
+        event_data = result["parsed_event"]
+        try:
+            # Create Event object
+            new_event = Event(
+                event_id=f"voice_{datetime.now().strftime('%Y%m%d%H%M%S')}",
+                title=event_data["title"],
+                start=datetime.fromisoformat(event_data["start"]),
+                end=datetime.fromisoformat(event_data["end"]),
+                people_tags=event_data["people_tags"],
+                category=event_data.get("category", "general"),
+                location=event_data.get("location"),
+                all_day=event_data.get("all_day", False)
+            )
+            
+            # Add to calendar (this clears cache)
+            await add_event(new_event)
+            
+            result["confirmation_message"] = f"✅ {result['confirmation_message']}"
+            result["requires_confirmation"] = False
+            
+        except Exception as e:
+            result["confirmation_message"] = f"❌ Sorry, I couldn't add that event: {str(e)}"
     
-    elif "joke" in text or "funny" in text:
-        from kai.presence import kai
-        return {
-            "command": text,
-            "intent": "entertain",
-            "response": kai.get_response("joke"),
-            "action": "speak"
-        }
-    
-    return {
-        "command": text,
-        "intent": "unknown",
-        "response": "I heard you! I'm still learning to understand. Can you try saying 'When is Kelligh's swim class?' or 'Tell me a joke'?",
-        "action": "speak"
-    }
+    return VoiceResponse(**result)
 
 
 @app.get("/api/status")
